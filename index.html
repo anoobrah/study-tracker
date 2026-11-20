@@ -85,6 +85,24 @@ main{padding:24px max(5vw,16px) 64px}
 .hist .ctrack{margin:0}
 .msg{padding:12px 14px;border-radius:10px;background:var(--blue2);margin-top:12px;font-size:14px}
 .msg.err{background:light-dark(#fde4e2,#4a1d1b)}
+.sum{margin:2px 0 8px}
+.sumbig{font:700 30px/1 Sora,sans-serif}.sumbig small{font:500 15px Inter;color:var(--mute);margin-left:4px}
+.link{color:light-dark(#2747b8,#9db2ff);font-weight:600;min-height:36px;padding:0 8px}
+.segbar{display:flex;height:8px;border-radius:8px;background:var(--line);overflow:hidden;margin:10px 0 8px}.segbar i{display:block;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;color:var(--mute)}.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:0}
+.grp{margin-top:18px}
+.ghead{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mute);padding-bottom:6px;border-bottom:2px solid var(--c)}
+.ghead b{color:var(--c);font-size:14px}.ghead i,.ph i{width:10px;height:10px;border-radius:3px;background:var(--c);flex:none}
+.ph{display:flex;align-items:center;gap:8px}
+.it{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px 10px;align-items:center;padding:10px 0 10px 10px;border-bottom:1px solid var(--line);border-left:3px solid transparent}
+.it .tt{font-size:15px;line-height:1.35}
+.it.r-done{border-left-color:var(--ok)}.it.r-done .tt{color:var(--mute);text-decoration:line-through}
+.it.r-part{border-left-color:var(--part)}.it.r-not{border-left-color:var(--no)}
+.seg3{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg3 button{min-height:38px;width:40px;padding:0;border-radius:0;font-size:17px;color:var(--mute)}
+.seg3 button+button{border-left:1px solid var(--line)}
+.seg3 button[data-r=done].on{background:var(--ok);color:#fff}.seg3 button[data-r=part].on{background:var(--part);color:#fff}.seg3 button[data-r=not].on{background:var(--no);color:#fff}
+.it .note{grid-column:1/-1;margin-top:2px}
 .empty{text-align:center;padding:36px 16px}
 .empty h2{font-size:24px;margin-bottom:8px}
 @media(max-width:600px){.item{grid-template-columns:1fr}.res{flex-wrap:wrap}.hist{grid-template-columns:1fr 70px}.hist .ctrack{grid-column:1/-1;order:3}.st{width:96px;padding:0 6px}.bar{grid-template-columns:78px 1fr 36px}}
@@ -253,22 +271,41 @@ function render(){
   const local="";
   v.innerHTML=(view==="courses"?coursesView():view==="history"?historyView():weekView())+msg+local;
 }
+const CCOL=["#3b6cf6","#a855f7","#0ea5c6","#e24a8d","#14b8a6","#9a7b5a","#6b7cff"];
+function courseColor(cid){const i=courseList().findIndex(([id])=>id===cid);return i<0?"#7b8499":CCOL[i%CCOL.length]}
+let editing=false;
 function weekView(){
   const k=weekKey,w=state.weeks[k]||{items:[]},s=weekStats(k),cur=mondayOf(new Date());
   const tag=k===cur?"This week":k<cur?"Past week":"Next week";
   const prev=state.weeks[shift(k,-7)];const carry=prev?prev.items.filter(i=>i.res!=="done"&&!w.items.some(j=>j.topic&&j.topic===i.topic&&i.topic)):[];
   let h=`<div class="card"><div class="weekhead"><button class="arrow" data-act="wk" data-d="-7" aria-label="Previous week">‹</button><h2>${tag}<span class="mute" style="display:block;font:500 15px Inter">Mon ${range(k)}</span></h2><button class="arrow" data-act="wk" data-d="7" aria-label="Next week">›</button></div>`;
-  if(s.n) h+=`<div class="stats"><span><b>${s.n}</b>planned</span><span><b style="color:var(--ok)">${s.d}</b>done</span><span><b style="color:var(--part)">${s.p}</b>partly</span><span><b style="color:var(--no)">${s.x}</b>not done</span><span><b>${s.open}</b>not marked</span></div>`;
-  h+=`<div>`+w.items.map((i,n)=>{const L=label(i);return `<div class="item"><div><span class="chip">${esc(L.code)}</span> <span class="t">${esc(L.title)}</span></div>
-    <div class="row"><div class="res">${[["done","Done"],["part","Partly"],["not","Not done"]].map(([r,l])=>`<button data-act="res" data-i="${n}" data-r="${r}" class="${i.res===r?"on":""}">${l}</button>`).join("")}</div><button class="x" data-act="rm" data-i="${n}" aria-label="Remove">✕</button></div>
-    ${i.res&&i.res!=="done"?`<input class="note" data-act="note" data-i="${n}" placeholder="Why not? (optional)" value="${esc(i.note)}">`:""}</div>`}).join("")+`</div>`;
+  if(s.n){
+    const seg=(n,c)=>n?`<i style="width:${n/s.n*100}%;background:${c}"></i>`:"";
+    h+=`<div class="sum"><div class="row"><span class="sumbig">${s.d}<small>/${s.n} done</small></span><span class="sp"></span><button class="link" data-act="edit">${editing?"Done editing":"Edit"}</button></div>
+    <div class="segbar">${seg(s.d,"var(--ok)")}${seg(s.p,"var(--part)")}${seg(s.x,"var(--no)")}</div>
+    <div class="legend"><span><i style="background:var(--ok)"></i>${s.d} done</span><span><i style="background:var(--part)"></i>${s.p} partly</span><span><i style="background:var(--no)"></i>${s.x} not done</span><span><i style="background:var(--line)"></i>${s.open} to mark</span></div></div>`;
+  }
+  // group items by course
+  const groups=new Map();
+  w.items.forEach((i,n)=>{const t=i.topic&&state.topics[i.topic];const g=t?t.course:"_other";if(!groups.has(g))groups.set(g,[]);groups.get(g).push([i,n])});
+  const order=[...courseList().map(([id])=>id).filter(id=>groups.has(id)),...(groups.has("_other")?["_other"]:[])];
+  for(const g of order){
+    const c=state.courses[g],col=g==="_other"?"#7b8499":courseColor(g);
+    h+=`<div class="grp" style="--c:${col}"><div class="ghead"><i></i>${c?`<b>${esc(c.code)}</b> ${esc(c.name)}`:"<b>Other tasks</b>"}</div>`+
+    groups.get(g).map(([i,n])=>{const L=label(i);
+      return `<div class="it ${i.res?"r-"+i.res:""}"><span class="tt">${esc(L.title)}</span>
+      <span class="seg3">${[["done","✓","Done"],["part","½","Partly"],["not","✗","Not done"]].map(([r,sym,l])=>`<button data-act="res" data-i="${n}" data-r="${r}" class="${i.res===r?"on":""}" aria-label="${l}" title="${l}">${sym}</button>`).join("")}</span>
+      ${editing?`<button class="x" data-act="rm" data-i="${n}" aria-label="Remove">✕</button>`:""}
+      ${i.res&&i.res!=="done"?`<input class="note" data-act="note" data-i="${n}" placeholder="Why not? (optional)" value="${esc(i.note)}">`:""}</div>`}).join("")+`</div>`;
+  }
   if(!s.n) h+=`<p class="mute">Nothing planned for this week yet. Pick what you'll study${k===cur?" — it's still not too late":""}.</p>`;
-  if(carry.length) h+=`<button class="btn ghost" data-act="carry" style="margin-top:12px">Carry over ${carry.length} unfinished from last week</button> `;
-  h+=`<button class="btn" data-act="pick" style="margin-top:12px">${picking?"Close":"+ Add to this week"}</button>`;
+  h+=`<div class="row" style="margin-top:14px">`;
+  if(carry.length) h+=`<button class="btn ghost" data-act="carry">Carry over ${carry.length} unfinished</button>`;
+  h+=`<button class="btn" data-act="pick">${picking?"Close":"+ Add to this week"}</button></div>`;
   if(picking){
     const inWeek=new Set(w.items.map(i=>i.topic).filter(Boolean));
     h+=`<div class="picker">`+courseList().map(([cid,c])=>{const ts=topicsOf(cid).filter(([id,t])=>t.status!=="done"&&!inWeek.has(id));if(!ts.length)return"";
-      return `<h3>${esc(c.code)} · ${esc(c.name)}</h3>`+ts.map(([id,t])=>`<label class="pick"><input type="checkbox" value="${id}"> ${esc(t.title)}${t.status==="doing"?' <span class="chip">in progress</span>':""}</label>`).join("")}).join("")+
+      return `<h3 style="--c:${courseColor(cid)}" class="ph"><i></i>${esc(c.code)} · ${esc(c.name)}</h3>`+ts.map(([id,t])=>`<label class="pick"><input type="checkbox" value="${id}"> ${esc(t.title)}${t.status==="doing"?' <span class="chip">in progress</span>':""}</label>`).join("")}).join("")+
       `<h3>Something else</h3><div class="row"><input class="txt" id="custom" placeholder="e.g. Finish DBMS lab report"></div>
       <div class="row" style="margin-top:12px"><button class="btn" data-act="addsel">Add selected</button></div></div>`;
   }
@@ -280,7 +317,7 @@ function coursesView(){
   for(const [cid,c] of courseList()){
     const all=topicsOf(cid,true),vis=all.filter(([,t])=>!t.hidden),hid=all.length-vis.length,d=vis.filter(([,t])=>t.status==="done").length;
     const list=showHidden[cid]?all:vis;
-    h+=`<div class="card"><div class="row"><h3 class="sp">${esc(c.code)} <span class="mute" style="font:500 15px Inter">${esc(c.name)}</span></h3><b>${d}/${vis.length}</b></div>
+    h+=`<div class="card" style="--c:${courseColor(cid)};border-top:4px solid var(--c)"><div class="row"><h3 class="sp"><span style="color:var(--c)">${esc(c.code)}</span> <span class="mute" style="font:500 15px Inter">${esc(c.name)}</span></h3><b>${d}/${vis.length}</b></div>
     <div class="ctrack"><i style="width:${vis.length?d/vis.length*100:0}%"></i></div>`+
     list.map(([id,t])=>`<div class="topic"><button class="st ${t.status}" data-act="st" data-id="${id}">${{todo:"Not started",doing:"In progress",done:"Done"}[t.status]}</button>
       <div class="row" style="flex-wrap:nowrap">${t.isNew?'<span class="chip new">NEW</span>':""}<span class="tname" contenteditable="plaintext-only" spellcheck="false" data-act="ren" data-id="${id}" role="textbox" aria-label="Topic name (tap to rename)" ${t.hidden?'style="opacity:.5"':""}>${esc(t.title)}</span></div>
@@ -320,6 +357,7 @@ document.addEventListener("click",e=>{
   if(a==="wk"){weekKey=shift(weekKey,+b.dataset.d);picking=false}
   else if(a==="goto"){weekKey=b.dataset.k}
   else if(a==="pick"){picking=!picking}
+  else if(a==="edit"){editing=!editing}
   else if(a==="res"){setRes(w().items[+b.dataset.i],b.dataset.r);save()}
   else if(a==="rm"){w().items.splice(+b.dataset.i,1);save()}
   else if(a==="carry"){const p=state.weeks[shift(weekKey,-7)];const have=new Set(w().items.map(i=>i.topic).filter(Boolean));
