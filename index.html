@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Study Tracker</title>
+<meta name="theme-color" content="#2747b8">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* VOICE: honest, calm, a little firm — a planner that doesn't let you lie to yourself.
+   IDEA: a weekly exercise-book page: plan on Monday, tick on Sunday.
+   PICTURE: the week list itself, under a big "done this week" count and per-course bars.
+   COLOUR and TYPE: notebook-blue ground band, white page, highlighter yellow accent; Sora + Inter.
+   LAYOUT: blue header band with totals, tabs, then the working list in one calm column. */
+:root{color-scheme:light dark;
+--bg:light-dark(#f4f6fb,#0e1320);--page:light-dark(#fff,#161d2e);--ink:light-dark(#141a2b,#e9ecf5);--mute:light-dark(#5d6680,#9aa3bd);
+--line:light-dark(#e2e6f0,#263048);--blue:#2747b8;--blue2:light-dark(#dfe6fb,#22305c);--hi:#ffd84d;--ok:#1f9d6b;--part:#e09a1b;--no:#d6453d}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Inter,system-ui,sans-serif;overflow-x:clip}
+h1,h2,h3{font-family:Sora,Inter,sans-serif;margin:0;line-height:1.1}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;min-height:40px;border-radius:10px;padding:0 14px}
+button:focus-visible,input:focus-visible{outline:3px solid var(--hi);outline-offset:2px}
+.top{background:var(--blue);color:#fff;padding:28px max(5vw,16px) 0}
+.wrap{max-width:860px;margin:0 auto}
+.hero{display:flex;flex-wrap:wrap;gap:20px 40px;align-items:flex-end;justify-content:space-between}
+.big{font:700 clamp(40px,8vw,64px)/1 Sora,sans-serif;letter-spacing:-.02em}
+.big small{font-size:.4em;font-weight:500;opacity:.8;letter-spacing:0}
+.sub{opacity:.85;margin-top:6px}
+.bars{display:grid;gap:6px;flex:1 1 260px;max-width:380px}
+.drive{justify-content:space-between}
+.bar{display:grid;grid-template-columns:76px 1fr 44px;gap:8px;align-items:center;font-size:13px}
+.track{height:8px;border-radius:8px;background:rgba(255,255,255,.2);overflow:hidden}
+.track i{display:block;height:100%;background:var(--hi);border-radius:8px}
+.bar b{text-align:right;font-weight:600}
+nav{display:flex;gap:4px;margin-top:24px;overflow-x:auto}
+nav a{color:#fff;text-decoration:none;padding:12px 18px;border-radius:12px 12px 0 0;opacity:.8;font-weight:600;white-space:nowrap}
+nav a.on{background:var(--bg);color:var(--ink);opacity:1}
+main{padding:24px max(5vw,16px) 64px}
+.card{background:var(--page);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:16px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.sp{flex:1}
+.btn{background:var(--blue);color:#fff;font-weight:600}
+.btn.ghost{background:var(--blue2);color:var(--ink)}
+.btn:disabled{opacity:.5;cursor:default}
+.mute{color:var(--mute);font-size:14px}
+.weekhead{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.weekhead h2{font-size:clamp(22px,4vw,30px);flex:1}
+.arrow{width:44px;padding:0;background:var(--blue2);font-size:20px}
+.chip{display:inline-block;font-size:12px;font-weight:600;padding:2px 8px;border-radius:6px;background:var(--blue2);white-space:nowrap}
+.item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 12px;padding:14px 0;border-top:1px solid var(--line);align-items:center}
+.item:first-child{border-top:0}
+.item .t{font-weight:500}
+.res{display:flex;gap:4px}
+.res button{min-height:36px;padding:0 10px;font-size:14px;border:1px solid var(--line);border-radius:8px}
+.res button[data-r=done].on{background:var(--ok);color:#fff;border-color:var(--ok)}
+.res button[data-r=part].on{background:var(--part);color:#fff;border-color:var(--part)}
+.res button[data-r=not].on{background:var(--no);color:#fff;border-color:var(--no)}
+.x{min-height:36px;width:36px;padding:0;color:var(--mute)}
+.note{grid-column:1/-1;width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:transparent;font-size:16px}
+.stats{display:flex;gap:18px;flex-wrap:wrap;margin:4px 0 6px;font-size:14px}
+.stats b{font:700 22px Sora,sans-serif;display:block}
+.picker{border-top:1px dashed var(--line);margin-top:14px;padding-top:14px}
+.picker h3{font-size:15px;margin:14px 0 6px}
+.pick{display:flex;gap:10px;align-items:center;padding:6px 0;cursor:pointer}
+.pick input{width:20px;height:20px;accent-color:var(--blue)}
+.txt{flex:1;min-width:180px;border:1px solid var(--line);border-radius:10px;padding:9px 12px;background:transparent;font-size:16px}
+.topic{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:6px 0;border-top:1px solid var(--line)}
+.st{min-height:32px;font-size:13px;font-weight:600;border-radius:8px;padding:0 10px;white-space:nowrap;width:104px}
+.st.todo{background:var(--blue2)}.st.doing{background:var(--part);color:#fff}.st.done{background:var(--ok);color:#fff}
+.tname{display:block;padding:6px 4px;border-radius:6px;width:100%;font-size:15px;overflow-wrap:anywhere;cursor:text}
+.tname:hover{background:var(--blue2)}
+.new{background:var(--hi);color:#141a2b}
+.ctrack{height:10px;border-radius:10px;background:var(--blue2);overflow:hidden;margin:10px 0 8px}
+.ctrack i{display:block;height:100%;background:var(--ok)}
+.hist{display:grid;grid-template-columns:150px minmax(0,1fr) 90px;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.hist .ctrack{margin:0}
+.msg{padding:12px 14px;border-radius:10px;background:var(--blue2);margin-top:12px;font-size:14px}
+.msg.err{background:light-dark(#fde4e2,#4a1d1b)}
+.empty{text-align:center;padding:36px 16px}
+.empty h2{font-size:24px;margin-bottom:8px}
+@media(max-width:600px){.item{grid-template-columns:1fr}.res{flex-wrap:wrap}.hist{grid-template-columns:1fr 70px}.hist .ctrack{grid-column:1/-1;order:3}.st{width:96px;padding:0 6px}.bar{grid-template-columns:78px 1fr 36px}}
+@media(prefers-reduced-motion:no-preference){.track i,.ctrack i{transition:width .5s ease}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <div class="hero">
+    <div><div class="big" id="bigNum">–</div><div class="sub" id="bigSub">Loading your tracker…</div></div>
+    <div class="bars" id="courseBars"></div>
+  </div>
+  <nav id="tabs"><a href="#week" data-v="week">This week</a><a href="#courses" data-v="courses">Courses</a><a href="#history" data-v="history">History</a></nav>
+</div></header>
+<main><div class="wrap" id="view"></div></main>
+<script>
+{
+const ROOT = "12ej3PwmSkw4_cEJa3vD68a1nuv0Yx9L4"; // 2-1 CSE'24 Drive folder
+const DRIVE = "Google Drive", TOOL = "search_files";
+let state = {v:1, courses:{}, topics:{}, weeks:{}, lastSync:0, apiKey:""};
+let loaded = false;
+let view = "week", weekKey = "", picking = false, syncing = false, syncMsg = null, showHidden = {};
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pad = n => String(n).padStart(2,"0");
+function iso(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())}
+function mondayOf(d){const x=new Date(d);x.setHours(0,0,0,0);x.setDate(x.getDate()-((x.getDay()+6)%7));return iso(x)}
+function parseD(k){const [y,m,d]=k.split("-").map(Number);return new Date(y,m-1,d)}
+function shift(k,days){const d=parseD(k);d.setDate(d.getDate()+days);return iso(d)}
+function fmt(k){return parseD(k).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+function range(k){return fmt(k)+" – "+fmt(shift(k,6))}
+weekKey = mondayOf(new Date());
+const uid = () => Math.random().toString(36).slice(2,10);
+const coll = (a,b) => a.localeCompare(b,undefined,{numeric:true});
+
+/* ---------- storage (this device) ---------- */
+const KEY="studyTracker.v1";
+let saving=false, dirty=false, timer=null;
+function save(){dirty=true;clearTimeout(timer);timer=setTimeout(flush,300)}
+function flush(){dirty=false;try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){syncMsg={err:true,text:"Couldn't save on this device ("+e.name+")."};render()}}
+window.addEventListener("pagehide",()=>{if(dirty)flush()});
+document.addEventListener("visibilitychange",()=>{if(document.hidden&&dirty)flush()});
+function normalize(s){s=JSON.parse(JSON.stringify(s||{}));return{v:1,courses:s.courses||{},topics:s.topics||{},weeks:s.weeks||{},lastSync:s.lastSync||0,apiKey:s.apiKey||""}}
+const SEED={courses:{
+ "1W3WIzHqUTvCNxHcZIfKQGv33m84gOE7H":["MATH 4341","Linear Algebra",[
+  ["1AexIsJEM1Mkgmud7e41qWxp0RnFXgPNG","L0_Introduction_updated.pdf","L0 · Introduction"],
+  ["1xNZkTlFG6wGVgupMJfkZckbgIwNX4j61","L1_Essence_of_Linear_Algebra.pdf","L1 · Essence of Linear Algebra"],
+  ["1JjXj2_hPfrH8Jf7eJaCiLifATfYdwPlR","L2_Geometry_of_Linear_Algebra.pdf","L2 · Geometry of Linear Algebra"],
+  ["1hcE7sHlfmrGL7xekAQvVFkOQj02hie6a","L3_Elimination_with_Matrices.pdf","L3 · Elimination with Matrices"]]],
+ "1ajCnuC5uyl9XMciteRszR7JKP0zgqEu2":["CSE 4305","Computer Organization and Architecture",[
+  ["19l-Qoc0Y9xrWrG7k_T1Iwnc5GaYkSlmQ","Lecture 1 - Fundamentals and Trends in Computer Design.pdf","Lecture 1 · Fundamentals and Trends in Computer Design"],
+  ["11O_3J7j5wAS1WcDZe-U0bZNTTmwzrthQ","Lecture 2 - Instruction Set Architecture (ISA).pdf","Lecture 2 · Instruction Set Architecture (ISA)"]]],
+ "1JSZVdlc37jtjUlaHNwRT44Gs-ujLD6hr":["CSE 4307","Database Management Systems",[
+  ["1aFCnx5UEnWFuH-eaJ0Jztne_JQ3bBG4r","Chapter 0.pdf","Chapter 0 · Pre-Introduction",1],
+  ["1Pl5enUdyyNohEsCRaobhPDEUq9SeMMhp","Chapter 1.pdf","Chapter 1 · Introduction"],
+  ["1Q4dI49UwecHz7E0U_9KK-NRpXNe1PJFB","Chapter 2.pdf","Chapter 2 · Relational Model & Relational Algebra"],
+  ["12XYhsNRxNV3gK13fCBktbFJCkzfPhCQO","Chapter 3.pdf","Chapter 3 · Introduction to SQL"],
+  ["13HjUGy7pJIOfV6gckC6YC-ju2ruaK37H","PostgreHelp.pdf","PostgreSQL help",1]]],
+ "1kHAyM1qyEPwt9z1OcjpJvF9udP-44ode":["EEE 4383","Electronic Devices and Circuits",[
+  ["1A9GCsFue9y94geAmR1kJ1-KEQwcQphf0","1. Diode.pdf","Diode"],
+  ["1IKHvH73DejqeI3d5_Ckigs7oQ2gS-IRv","2. Zener Diode.pdf","Zener Diode"],
+  ["1Xw2d3clbRVc_AgRBkjr6TLuSrb1PCnB-","3. Bipolar Junction Transistor.pdf","Bipolar Junction Transistor (BJT)"],
+  ["1xgsvhq_HFJL45KyUnmkxk7wge3R_pMyc","4. MOSFET.pdf","MOSFET"],
+  ["1Y8gT-Q4eewQBFn0G7YVA9iF-V80OGxBE","6. Operational Amplifier.pdf","Operational Amplifier"]]],
+ "19IGv6DVj8uyPbEd6tiq2Uh2noW1TV5lV":["CSE 4303","Data Structures",[
+  ["1vK389tOLUF05Ioy4X_xjwzVg8K3ZVlpp","Week 1 - Time Complexity.pdf","Week 1 · Time Complexity"],
+  ["1lO1VIITs__zOsHpDGHrNEUJO5YC7VgG-","Week 2 - Stack.pdf","Week 2 · Stack"],
+  ["1je51PPrx7dPiGlnmcZ8j7UHAVKywfM37","Week 3 - Queue.pdf","Week 3 · Queue"],
+  ["1L06wjhoJFn4IKVR7U4zF0Evs-g6pxpyK","Week 3 - Queue.pdf~heap","Week 3 · Heap"]]],
+ "1DfIu9Wmd5YeTTonAg9EAXeQK9Dr6bVf5":["CSE 4301","Object Oriented Programming",[
+  ["15ygbl-Ou5fzl5fjOlNcEAGO5vMI0Zhox","Week 1.pdf","Week 1 · C++ Programming Basics"],
+  ["1lYtutAgTYPhfkQNDYWSnCyxKcTvzSSIE","Week 2.pdf","Week 2 · Intro to the Object-Oriented Approach"],
+  ["1_9WkUjtSv_zeHXo17MIgn4vGJ1keDY5S","Week 3.pdf","Week 3 · Objects and Classes"]]]}};
+function seed(){
+  for(const [cid,[code,name,ts]] of Object.entries(SEED.courses)){
+    state.courses[cid]={code,name,hidden:false};
+    for(const [id,file,title,hid] of ts) state.topics[id]={course:cid,file,title,status:"todo",hidden:!!hid,isNew:false,added:Date.now(),url:"https://drive.google.com/file/d/"+id+"/view"};
+  }
+  state.lastSync=Date.parse("2026-11-20T07:00:00Z"); save();
+}
+function boot(){
+  try{const s=localStorage.getItem(KEY); if(s) state=normalize(JSON.parse(s))}catch(e){}
+  if(!Object.keys(state.topics).length) seed();
+  if(navigator.storage&&navigator.storage.persist) navigator.storage.persist().catch(()=>{});
+  loaded=true; render();
+}
+
+/* ---------- Drive check (Google Drive API, needs a key) ---------- */
+async function drive(folder){
+  const u="https://www.googleapis.com/drive/v3/files?pageSize=200&supportsAllDrives=true&includeItemsFromAllDrives=true"
+    +"&fields="+encodeURIComponent("files(id,name,mimeType,webViewLink)")
+    +"&q="+encodeURIComponent(`'${folder}' in parents and trashed = false`)+"&key="+encodeURIComponent(state.apiKey);
+  let r; try{r=await fetch(u)}catch(e){throw{code:"offline"}}
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok) throw{code:"http",status:r.status,text:(j.error&&j.error.message)||r.statusText};
+  return (j.files||[]).map(f=>({id:f.id,title:f.name,mimeType:f.mimeType,viewUrl:f.webViewLink}));
+}
+function cleanTitle(f){return f.title.replace(/\.(pdf|pptx?|docx?)$/i,"").replace(/_/g," ").replace(/\s+/g," ").trim()}
+async function sync(){
+  if(syncing) return;
+  if(!state.apiKey){syncMsg={err:true,text:"Add your Google API key below first (one-time setup)."};render();return}
+  syncing=true; syncMsg={text:"Checking your Drive folder…"}; render();
+  let added=0;
+  try{
+    const top=await drive(ROOT);
+    const courses=top.filter(f=>/folder/.test(f.mimeType)&&!/\blab\b|routine/i.test(f.title));
+    for(const c of courses){
+      const [code,...rest]=c.title.split(" - ");
+      const prev=state.courses[c.id]||{};
+      state.courses[c.id]={code:prev.code||code.trim(),name:prev.name||(rest.join(" - ")||code).trim(),hidden:!!prev.hidden};
+      const kids=await drive(c.id);
+      const slides=kids.find(k=>/folder/.test(k.mimeType)&&/^slides?$/i.test(k.title.trim()));
+      if(!slides) continue;
+      for(const f of await drive(slides.id)){
+        if(/folder/.test(f.mimeType)||state.topics[f.id]) continue;
+        state.topics[f.id]={course:c.id,file:f.title,title:cleanTitle(f),status:"todo",hidden:/^chapter 0\b|help\.pdf$/i.test(f.title),isNew:true,added:Date.now(),url:f.viewUrl||""};
+        if(!state.topics[f.id].hidden) added++;
+      }
+    }
+    state.lastSync=Date.now(); save();
+    syncMsg={text: added?`Found ${added} new topic${added>1?"s":""} — marked NEW below. Tap a name to rename it.`:"No new slides since last check."};
+  }catch(e){syncMsg={err:true,text:driveErr(e)}}
+  syncing=false; render();
+}
+function driveErr(e){
+  if(e.code==="offline") return "No internet connection — try again when you're online.";
+  if(e.status===400||e.status===403&&/key|API/i.test(e.text)) return "Google rejected the API key: "+e.text+" Check the key and that the Drive API is enabled for it.";
+  if(e.status===404) return "Couldn't see the Drive folder. It may no longer be shared by link.";
+  if(e.status===429||e.status>=500) return "Drive is busy right now. Try again in a minute.";
+  return "Drive check failed: "+(e.text||e.code||"unknown error");
+}
+function exportData(){
+  const b=new Blob([JSON.stringify(state,null,1)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="study-tracker-backup-"+iso(new Date())+".json";
+  document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);
+}
+function importData(file){
+  const r=new FileReader();
+  r.onload=()=>{try{const s=normalize(JSON.parse(r.result));if(!s.topics||!Object.keys(s.topics).length)throw 0;state=s;save();syncMsg={text:"Backup restored."}}catch(e){syncMsg={err:true,text:"That file isn't a Study Tracker backup."}}render()};
+  r.readAsText(file);
+}
+
+/* ---------- derived ---------- */
+function courseList(){return Object.entries(state.courses).filter(([,c])=>!c.hidden).sort((a,b)=>coll(a[1].code,b[1].code))}
+function topicsOf(cid,all){return Object.entries(state.topics).filter(([,t])=>t.course===cid&&(all||!t.hidden)).sort((a,b)=>coll(a[1].file||a[1].title,b[1].file||b[1].title))}
+function week(k){return state.weeks[k]||(state.weeks[k]={items:[]})}
+function weekStats(k){const it=(state.weeks[k]||{items:[]}).items;const n=it.length,d=it.filter(i=>i.res==="done").length,p=it.filter(i=>i.res==="part").length,x=it.filter(i=>i.res==="not").length;return{n,d,p,x,open:n-d-p-x}}
+function label(i){if(i.topic&&state.topics[i.topic]){const t=state.topics[i.topic];return{title:t.title,code:(state.courses[t.course]||{}).code||""}}return{title:i.text||"(removed topic)",code:i.code||"Task"}}
+
+/* ---------- render ---------- */
+function renderTop(){
+  const cs=courseList();let tot=0,done=0;
+  $("#courseBars").innerHTML=cs.map(([id])=>{const ts=topicsOf(id);const d=ts.filter(([,t])=>t.status==="done").length;tot+=ts.length;done+=d;
+    const pc=ts.length?Math.round(d/ts.length*100):0;
+    return `<div class="bar"><span>${esc(state.courses[id].code)}</span><span class="track"><i style="width:${pc}%"></i></span><b>${d}/${ts.length}</b></div>`}).join("");
+  const s=weekStats(mondayOf(new Date()));
+  $("#bigNum").innerHTML=tot?`${done}<small> / ${tot} topics done</small>`:"Study Tracker";
+  $("#bigSub").textContent=!loaded?"Loading your tracker…":tot?`This week: ${s.d} of ${s.n} planned done · ${tot-done} topic${tot-done===1?"":"s"} left overall`:"Import your courses to begin.";
+  document.querySelectorAll("#tabs a").forEach(a=>a.classList.toggle("on",a.dataset.v===view));
+}
+function render(){
+  renderTop();
+  const v=$("#view");
+  if(!loaded){v.innerHTML=`<div class="card mute">Loading…</div>`;return}
+  const msg=syncMsg?`<div class="msg${syncMsg.err?" err":""}">${esc(syncMsg.text)}</div>`:"";
+  const local="";
+  v.innerHTML=(view==="courses"?coursesView():view==="history"?historyView():weekView())+msg+local;
+}
+function weekView(){
+  const k=weekKey,w=state.weeks[k]||{items:[]},s=weekStats(k),cur=mondayOf(new Date());
+  const tag=k===cur?"This week":k<cur?"Past week":"Next week";
+  const prev=state.weeks[shift(k,-7)];const carry=prev?prev.items.filter(i=>i.res!=="done"&&!w.items.some(j=>j.topic&&j.topic===i.topic&&i.topic)):[];
+  let h=`<div class="card"><div class="weekhead"><button class="arrow" data-act="wk" data-d="-7" aria-label="Previous week">‹</button><h2>${tag}<span class="mute" style="display:block;font:500 15px Inter">Mon ${range(k)}</span></h2><button class="arrow" data-act="wk" data-d="7" aria-label="Next week">›</button></div>`;
+  if(s.n) h+=`<div class="stats"><span><b>${s.n}</b>planned</span><span><b style="color:var(--ok)">${s.d}</b>done</span><span><b style="color:var(--part)">${s.p}</b>partly</span><span><b style="color:var(--no)">${s.x}</b>not done</span><span><b>${s.open}</b>not marked</span></div>`;
+  h+=`<div>`+w.items.map((i,n)=>{const L=label(i);return `<div class="item"><div><span class="chip">${esc(L.code)}</span> <span class="t">${esc(L.title)}</span></div>
+    <div class="row"><div class="res">${[["done","Done"],["part","Partly"],["not","Not done"]].map(([r,l])=>`<button data-act="res" data-i="${n}" data-r="${r}" class="${i.res===r?"on":""}">${l}</button>`).join("")}</div><button class="x" data-act="rm" data-i="${n}" aria-label="Remove">✕</button></div>
+    ${i.res&&i.res!=="done"?`<input class="note" data-act="note" data-i="${n}" placeholder="Why not? (optional)" value="${esc(i.note)}">`:""}</div>`}).join("")+`</div>`;
+  if(!s.n) h+=`<p class="mute">Nothing planned for this week yet. Pick what you'll study${k===cur?" — it's still not too late":""}.</p>`;
+  if(carry.length) h+=`<button class="btn ghost" data-act="carry" style="margin-top:12px">Carry over ${carry.length} unfinished from last week</button> `;
+  h+=`<button class="btn" data-act="pick" style="margin-top:12px">${picking?"Close":"+ Add to this week"}</button>`;
+  if(picking){
+    const inWeek=new Set(w.items.map(i=>i.topic).filter(Boolean));
+    h+=`<div class="picker">`+courseList().map(([cid,c])=>{const ts=topicsOf(cid).filter(([id,t])=>t.status!=="done"&&!inWeek.has(id));if(!ts.length)return"";
+      return `<h3>${esc(c.code)} · ${esc(c.name)}</h3>`+ts.map(([id,t])=>`<label class="pick"><input type="checkbox" value="${id}"> ${esc(t.title)}${t.status==="doing"?' <span class="chip">in progress</span>':""}</label>`).join("")}).join("")+
+      `<h3>Something else</h3><div class="row"><input class="txt" id="custom" placeholder="e.g. Finish DBMS lab report"></div>
+      <div class="row" style="margin-top:12px"><button class="btn" data-act="addsel">Add selected</button></div></div>`;
+  }
+  return h+`</div>`;
+}
+function coursesView(){
+  const when=state.lastSync?new Date(state.lastSync).toLocaleString("en-GB",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}):"never";
+  let h=`<div class="card row drive"><div><b>Drive folder</b><div class="mute">Last checked ${esc(when)}</div></div><button class="btn" data-act="sync" ${syncing?"disabled":""}>${syncing?"Checking…":"Check Drive for new slides"}</button></div>`;
+  for(const [cid,c] of courseList()){
+    const all=topicsOf(cid,true),vis=all.filter(([,t])=>!t.hidden),hid=all.length-vis.length,d=vis.filter(([,t])=>t.status==="done").length;
+    const list=showHidden[cid]?all:vis;
+    h+=`<div class="card"><div class="row"><h3 class="sp">${esc(c.code)} <span class="mute" style="font:500 15px Inter">${esc(c.name)}</span></h3><b>${d}/${vis.length}</b></div>
+    <div class="ctrack"><i style="width:${vis.length?d/vis.length*100:0}%"></i></div>`+
+    list.map(([id,t])=>`<div class="topic"><button class="st ${t.status}" data-act="st" data-id="${id}">${{todo:"Not started",doing:"In progress",done:"Done"}[t.status]}</button>
+      <div class="row" style="flex-wrap:nowrap">${t.isNew?'<span class="chip new">NEW</span>':""}<span class="tname" contenteditable="plaintext-only" spellcheck="false" data-act="ren" data-id="${id}" role="textbox" aria-label="Topic name (tap to rename)" ${t.hidden?'style="opacity:.5"':""}>${esc(t.title)}</span></div>
+      ${t.url?`<a class="x" href="${esc(t.url)}" target="_blank" rel="noopener" aria-label="Open slides" title="Open slides" style="display:grid;place-items:center;text-decoration:none">↗</a>`:""}<button class="x" data-act="hide" data-id="${id}" aria-label="${t.hidden?"Restore":"Hide"}" title="${t.hidden?"Restore":"Hide (not a real topic)"}">${t.hidden?"↺":"✕"}</button></div>`).join("")+
+    `<div class="row" style="margin-top:10px"><input class="txt" data-add="${cid}" placeholder="Add a topic by hand"><button class="btn ghost" data-act="addt" data-c="${cid}">Add</button>
+    ${hid?`<button data-act="showhid" data-c="${cid}" class="mute">${showHidden[cid]?"Hide":"Show"} ${hid} hidden</button>`:""}</div></div>`;
+  }
+  h+=`<div class="card"><h3 style="font-size:17px;margin-bottom:6px">Settings &amp; backup</h3>
+  <p class="mute">Google API key for the Drive check (one-time setup — see the README on GitHub). It stays on this phone.</p>
+  <div class="row"><input class="txt" id="apikey" type="password" autocomplete="off" placeholder="Paste API key" value="${esc(state.apiKey)}"><button class="btn ghost" data-act="savekey">Save key</button></div>
+  <p class="mute" style="margin-top:14px">Your data lives only on this device. Make a backup now and then.</p>
+  <div class="row"><button class="btn ghost" data-act="export">Download backup</button><label class="btn ghost" style="display:inline-flex;align-items:center;cursor:pointer">Restore backup<input type="file" accept="application/json,.json" id="restore" hidden></label></div></div>`;
+  return h;
+}
+function historyView(){
+  const ks=Object.keys(state.weeks).filter(k=>state.weeks[k].items.length).sort().reverse();
+  if(!ks.length) return `<div class="card mute">No weeks planned yet. Plan this week and it'll show up here.</div>`;
+  let tn=0,td=0;ks.forEach(k=>{const s=weekStats(k);tn+=s.n;td+=s.d});
+  return `<div class="card"><h2 style="font-size:24px">${tn?Math.round(td/tn*100):0}% of planned items actually done</h2><p class="mute">${td} of ${tn} across ${ks.length} week${ks.length>1?"s":""}. "Partly" doesn't count as done.</p>`+
+  ks.map(k=>{const s=weekStats(k),pc=s.n?Math.round(s.d/s.n*100):0;
+    return `<div class="hist"><a href="#week" data-act="goto" data-k="${k}" style="color:inherit">${range(k)}</a><div class="ctrack"><i style="width:${pc}%"></i></div><span style="text-align:right"><b>${s.d}/${s.n}</b> · ${pc}%</span></div>`}).join("")+`</div>`;
+}
+
+/* ---------- actions ---------- */
+function setRes(i,r){
+  i.res=i.res===r?null:r;
+  const t=i.topic&&state.topics[i.topic];
+  if(t){ if(i.res==="done"){t.status="done";t.isNew=false} else if(i.res==="part"&&t.status!=="done") t.status="doing"; else if(!i.res&&t.status==="done") t.status="doing"}
+}
+document.addEventListener("click",e=>{
+  const b=e.target.closest("[data-act]"); if(!b) return;
+  const a=b.dataset.act, w=()=>week(weekKey);
+  if(a==="sync") return sync();
+  if(a==="export") return exportData();
+  if(a==="savekey"){state.apiKey=($("#apikey").value||"").trim();save();syncMsg={text:state.apiKey?"API key saved.":"API key removed."}}
+  else
+  if(a==="wk"){weekKey=shift(weekKey,+b.dataset.d);picking=false}
+  else if(a==="goto"){weekKey=b.dataset.k}
+  else if(a==="pick"){picking=!picking}
+  else if(a==="res"){setRes(w().items[+b.dataset.i],b.dataset.r);save()}
+  else if(a==="rm"){w().items.splice(+b.dataset.i,1);save()}
+  else if(a==="carry"){const p=state.weeks[shift(weekKey,-7)];const have=new Set(w().items.map(i=>i.topic).filter(Boolean));
+    p.items.filter(i=>i.res!=="done"&&!(i.topic&&have.has(i.topic))).forEach(i=>w().items.push({id:uid(),topic:i.topic||null,text:i.text||"",code:i.code||"",res:null,note:""}));save()}
+  else if(a==="addsel"){const sel=[...document.querySelectorAll(".picker input[type=checkbox]:checked")].map(x=>x.value);
+    sel.forEach(id=>w().items.push({id:uid(),topic:id,text:"",res:null,note:""}));
+    const c=$("#custom");if(c&&c.value.trim()) w().items.push({id:uid(),topic:null,text:c.value.trim(),code:"Task",res:null,note:""});
+    if(sel.length||(c&&c.value.trim())){picking=false;save()}}
+  else if(a==="st"){const t=state.topics[b.dataset.id];t.status={todo:"doing",doing:"done",done:"todo"}[t.status];t.isNew=false;save()}
+  else if(a==="hide"){const t=state.topics[b.dataset.id];t.hidden=!t.hidden;save()}
+  else if(a==="showhid"){showHidden[b.dataset.c]=!showHidden[b.dataset.c]}
+  else if(a==="addt"){const inp=document.querySelector(`[data-add="${b.dataset.c}"]`);const v=inp&&inp.value.trim();if(!v)return;
+    state.topics["m"+uid()]={course:b.dataset.c,file:"~"+v,title:v,status:"todo",hidden:false,isNew:false,added:Date.now(),url:""};save()}
+  else return;
+  render();
+});
+document.addEventListener("focusout",e=>{
+  const el=e.target;
+  if(el.dataset&&el.dataset.act==="ren"){const t=state.topics[el.dataset.id],v=el.textContent.replace(/\s+/g," ").trim();if(t&&v&&v!==t.title){t.title=v;save()}else if(t)el.textContent=t.title}
+});
+document.addEventListener("change",e=>{
+  const el=e.target;
+  if(el.id==="restore"&&el.files[0]) importData(el.files[0]);
+  if(el.dataset.act==="note"){const i=week(weekKey).items[+el.dataset.i];if(i&&i.note!==el.value){i.note=el.value;save()}}
+});
+document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.dataset.act==="ren"){e.preventDefault();e.target.blur();return}if(e.key==="Enter"&&e.target.dataset.add){document.querySelector(`[data-act=addt][data-c="${e.target.dataset.add}"]`).click()}});
+function route(){const h=location.hash.slice(1);view=["week","courses","history"].includes(h)?h:"week";render()}
+window.addEventListener("hashchange",route);
+route();
+boot();
+if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
+}
+</script>
+</body>
+</html>
