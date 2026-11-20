@@ -8,6 +8,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<script>try{var t=localStorage.getItem("studyTracker.theme");if(t==="dark"||t==="light")document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -26,7 +27,7 @@ h1,h2,h3{font-family:Sora,Inter,sans-serif;margin:0;line-height:1.1}
 button,input{font:inherit;color:inherit}
 button{cursor:pointer;border:0;background:none;min-height:40px;border-radius:10px;padding:0 14px}
 button:focus-visible,input:focus-visible{outline:3px solid var(--hi);outline-offset:2px}
-.top{background:var(--blue);color:#fff;padding:28px max(5vw,16px) 0}
+.top{background:light-dark(#2747b8,#1b2f7a);color:#fff;padding:28px max(5vw,16px) 0}
 .wrap{max-width:860px;margin:0 auto}
 .hero{display:flex;flex-wrap:wrap;gap:20px 40px;align-items:flex-end;justify-content:space-between}
 .big{font:700 clamp(40px,8vw,64px)/1 Sora,sans-serif;letter-spacing:-.02em}
@@ -38,8 +39,10 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--hi);outline-off
 .track{height:8px;border-radius:8px;background:rgba(255,255,255,.2);overflow:hidden}
 .track i{display:block;height:100%;background:var(--hi);border-radius:8px}
 .bar b{text-align:right;font-weight:600}
-nav{display:flex;gap:4px;margin-top:24px;overflow-x:auto}
+nav{display:flex;gap:4px;align-items:flex-end;margin-top:24px;overflow-x:auto}
 nav a{color:#fff;text-decoration:none;padding:12px 18px;border-radius:12px 12px 0 0;opacity:.8;font-weight:600;white-space:nowrap}
+.themebtn{position:absolute;top:-14px;right:0;color:#fff;background:rgba(255,255,255,.14);min-height:36px;font-weight:600;font-size:14px;white-space:nowrap;padding:0 12px}
+.hero>div:first-child{padding-right:96px}
 nav a.on{background:var(--bg);color:var(--ink);opacity:1}
 main{padding:24px max(5vw,16px) 64px}
 .card{background:var(--page);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:16px}
@@ -89,7 +92,7 @@ main{padding:24px max(5vw,16px) 64px}
 </style>
 </head>
 <body>
-<header class="top"><div class="wrap">
+<header class="top"><div class="wrap" style="position:relative"><button id="themeBtn" class="themebtn" type="button" aria-label="Change theme">Auto</button>
   <div class="hero">
     <div><div class="big" id="bigNum">–</div><div class="sub" id="bigSub">Loading your tracker…</div></div>
     <div class="bars" id="courseBars"></div>
@@ -343,6 +346,17 @@ document.addEventListener("change",e=>{
   if(el.dataset.act==="note"){const i=week(weekKey).items[+el.dataset.i];if(i&&i.note!==el.value){i.note=el.value;save()}}
 });
 document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.dataset.act==="ren"){e.preventDefault();e.target.blur();return}if(e.key==="Enter"&&e.target.dataset.add){document.querySelector(`[data-act=addt][data-c="${e.target.dataset.add}"]`).click()}});
+const THEMES=["auto","dark","light"],TLABEL={auto:"◐ Auto",dark:"☾ Dark",light:"☀ Light"};
+function curTheme(){try{return localStorage.getItem("studyTracker.theme")||"auto"}catch(e){return"auto"}}
+function applyTheme(t){
+  if(t==="auto") delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme=t;
+  const dark=t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches);
+  document.querySelector('meta[name=theme-color]').content=dark?"#1b2f7a":"#2747b8";
+  $("#themeBtn").textContent=TLABEL[t];
+}
+$("#themeBtn").addEventListener("click",()=>{const n=THEMES[(THEMES.indexOf(curTheme())+1)%3];try{localStorage.setItem("studyTracker.theme",n)}catch(e){}applyTheme(n)});
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>applyTheme(curTheme()));
+applyTheme(curTheme());
 function route(){const h=location.hash.slice(1);view=["week","courses","history"].includes(h)?h:"week";render()}
 window.addEventListener("hashchange",route);
 route();
